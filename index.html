@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IRONFORGE GYM — Unleash The Beast Within</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: { 900: '#080808', 800: '#0F0F0F', 700: '#161616', 600: '#1E1E1E', 500: '#2A2A2A' },
+            neon: { lime: '#CCFF00', limeD: '#A8D600', limeDark: '#8AB300' },
+            steel: { 100: '#E8E8E8', 200: '#CCCCCC', 300: '#999999', 400: '#666666', 500: '#444444' }
+          },
+          fontFamily: {
+            heading: ['Bebas Neue', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    *, body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+    h1, h2, h3, h4, .font-heading { font-family: 'Bebas Neue', sans-serif; }
+    html { scroll-behavior: smooth; }
+    [id] { scroll-margin-top: 80px; }
+
+    /* ========== PRELOADER ========== */
+    #preloader {
+      position: fixed; inset: 0; z-index: 10000;
+      background: #080808;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #preloader.hide { opacity: 0; visibility: hidden; }
+    .loader-bar {
+      width: 200px; height: 3px; background: #1E1E1E; border-radius: 10px; overflow: hidden;
+    }
+    .loader-bar-inner {
+      height: 100%; width: 0%; background: #CCFF00; border-radius: 10px;
+      animation: loadBar 1.8s cubic-bezier(0.65,0,0.35,1) forwards;
+    }
+    @keyframes loadBar { to { width: 100%; } }
+    .loader-text {
+      font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: #CCFF00;
+      letter-spacing: 0.3em; margin-bottom: 2rem;
+      animation: pulse-text 1s ease-in-out infinite alternate;
+    }
+    @keyframes pulse-text { from { opacity: 0.4; } to { opacity: 1; } }
+
+    /* ========== GRAIN TEXTURE ========== */
+    body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+    }
+
+    /* ========== CURSOR GLOW ========== */
+    #cursor-glow {
+      position: fixed; width: 500px; height: 500px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(204,255,0,0.06) 0%, transparent 70%);
+      pointer-events: none; z-index: 1; transform: translate(-50%, -50%);
+      transition: opacity 0.3s ease;
+    }
+
+    /* ========== SCROLL REVEAL ========== */
+    .reveal {
+      opacity: 0; transform: translateY(60px);
+      transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-left {
+      opacity: 0; transform: translateX(-80px);
+      transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right {
+      opacity: 0; transform: translateX(80px);
+      transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+    .reveal-scale {
+      opacity: 0; transform: scale(0.85);
+      transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+    /* stagger children */
+    .stagger > * { transition-delay: calc(var(--i, 0) * 0.12s); }
+
+    /* ========== HERO TEXT SPLIT ========== */
+    .hero-word {
+      display: inline-block; opacity: 0; transform: translateY(100%) rotateX(-80deg);
+      transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+      transform-origin: bottom center;
+    }
+    .hero-word.show { opacity: 1; transform: translateY(0) rotateX(0deg); }
+
+    /* ========== MARQUEE ========== */
+    .marquee-track {
+      display: flex; gap: 4rem; animation: marquee 25s linear infinite; white-space: nowrap;
+    }
+    .marquee-track:hover { animation-play-state: paused; }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ========== FLOATING SHAPES ========== */
+    .float-shape {
+      position: absolute; border-radius: 50%; pointer-events: none; opacity: 0.08;
+    }
+    .float-1 { animation: float1 8s ease-in-out infinite; }
+    .float-2 { animation: float2 10s ease-in-out infinite; }
+    .float-3 { animation: float3 12s ease-in-out infinite; }
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(30px, -40px) rotate(120deg); }
+      66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-40px, -30px) scale(1.2); }
+    }
+    @keyframes float3 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(20px, -50px) rotate(90deg); }
+      75% { transform: translate(-30px, 30px) rotate(270deg); }
+    }
+
+    /* ========== BUTTON MAGNETIC ========== */
+    .btn-mag {
+      position: relative; display: inline-flex; align-items: center; justify-content: center;
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.15em;
+      padding: 1rem 2.5rem; border-radius: 6px; overflow: hidden;
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+    }
+    .btn-mag::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    .btn-mag:hover::before { opacity: 1; }
+
+    .btn-primary {
+      background: #CCFF00; color: #080808; font-weight: 700;
+      box-shadow: 0 0 40px rgba(204,255,0,0.2), 0 4px 16px rgba(204,255,0,0.15);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 60px rgba(204,255,0,0.35), 0 8px 32px rgba(204,255,0,0.25);
+    }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-primary:focus-visible { outline: 2px solid #CCFF00; outline-offset: 3px; }
+
+    .btn-outline {
+      background: transparent; color: #fff; border: 2px solid #2A2A2A;
+    }
+    .btn-outline:hover { border-color: #CCFF00; color: #CCFF00; }
+    .btn-outline:active { transform: scale(0.97); }
+    .btn-outline:focus-visible { outline: 2px solid #CCFF00; outline-offset: 3px; }
+
+    /* ========== 3D TILT CARD ========== */
+    .tilt-card {
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease;
+      transform-style: preserve-3d; perspective: 800px;
+    }
+    .tilt-card:hover {
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 40px rgba(204,255,0,0.05);
+    }
+
+    /* ========== GLOWING BORDER ========== */
+    .glow-border {
+      position: relative; overflow: hidden; border-radius: 1rem;
+    }
+    .glow-border::before {
+      content: ''; position: absolute; inset: -2px; z-index: -1;
+      background: conic-gradient(from 0deg, #CCFF00, transparent, #CCFF00, transparent, #CCFF00);
+      border-radius: inherit; opacity: 0; transition: opacity 0.5s ease;
+      animation: spin-glow 3s linear infinite;
+    }
+    .glow-border:hover::before { opacity: 0.6; }
+    @keyframes spin-glow { to { transform: rotate(360deg); } }
+
+    /* ========== PARALLAX HERO ========== */
+    .parallax-layer { transition: transform 0.1s linear; will-change: transform; }
+
+    /* ========== COUNTER ANIMATION ========== */
+    .counter-num { font-variant-numeric: tabular-nums; }
+
+    /* ========== SECTION DIVIDER ========== */
+    .section-divider {
+      width: 80px; height: 3px;
+      background: linear-gradient(90deg, #CCFF00, transparent);
+      border-radius: 10px; margin: 0 auto;
+    }
+
+    /* ========== PROGRAM CARD HOVER ========== */
+    .prog-card { position: relative; overflow: hidden; border-radius: 1rem; cursor: pointer; }
+    .prog-card img { transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+    .prog-card:hover img { transform: scale(1.1); }
+    .prog-card .prog-line {
+      width: 0; height: 2px; background: #CCFF00; transition: width 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+    .prog-card:hover .prog-line { width: 60px; }
+
+    /* ========== TRAINER CARD ========== */
+    .trainer-card .trainer-social {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    .trainer-card:hover .trainer-social { opacity: 1; transform: translateY(0); }
+
+    /* ========== PRICING POPULAR ========== */
+    .price-popular { position: relative; }
+    .price-popular::after {
+      content: ''; position: absolute; inset: -1px; border-radius: inherit;
+      background: linear-gradient(135deg, #CCFF00, #8AB300, #CCFF00);
+      z-index: -1;
+    }
+
+    /* ========== FAQ ========== */
+    .faq-item { border-bottom: 1px solid #1E1E1E; }
+    .faq-q { cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 0; }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), padding 0.3s ease; }
+    .faq-item.open .faq-a { max-height: 300px; padding-bottom: 1.5rem; }
+    .faq-icon { transition: transform 0.3s ease, color 0.3s ease; }
+    .faq-item.open .faq-icon { transform: rotate(45deg); color: #CCFF00; }
+
+    /* ========== NAV ========== */
+    .nav-link {
+      position: relative; color: #666; font-size: 0.85rem; font-weight: 500;
+      letter-spacing: 0.05em; transition: color 0.2s ease;
+    }
+    .nav-link::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px;
+      background: #CCFF00; transition: width 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    .nav-link:hover { color: #fff; }
+    .nav-link:hover::after { width: 100%; }
+    .nav-link:focus-visible { outline: 2px solid #CCFF00; outline-offset: 4px; border-radius: 2px; }
+
+    /* ========== MOBILE MENU ========== */
+    #mobile-menu { display: none; }
+    #mobile-menu.open { display: flex; }
+
+    /* ========== TESTIMONIAL SLIDER ========== */
+    .test-slider { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .test-slide { scroll-snap-align: start; }
+
+    /* ========== SCROLL PROGRESS BAR ========== */
+    #scroll-progress {
+      position: fixed; top: 0; left: 0; height: 3px; z-index: 10001;
+      background: linear-gradient(90deg, #CCFF00, #8AB300);
+      width: 0%; transition: width 0.05s linear;
+    }
+
+    /* ========== ANIMATED BG GRID ========== */
+    .bg-grid {
+      background-image:
+        linear-gradient(rgba(204,255,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(204,255,0,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ========== RIPPLE EFFECT ON BUTTONS ========== */
+    .ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: scale(0); animation: ripple-effect 0.6s ease-out;
+      pointer-events: none;
+    }
+    @keyframes ripple-effect { to { transform: scale(4); opacity: 0; } }
+
+    /* Smooth number counting */
+    @keyframes count-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body class="bg-dark-900 text-white overflow-x-hidden">
+
+  <!-- SCROLL PROGRESS -->
+  <div id="scroll-progress"></div>
+
+  <!-- CURSOR GLOW -->
+  <div id="cursor-glow"></div>
+
+  <!-- ============================================ PRELOADER -->
+  <div id="preloader">
+    <div class="text-center">
+      <div class="loader-text">IRONFORGE</div>
+      <div class="loader-bar"><div class="loader-bar-inner"></div></div>
+    </div>
+  </div>
+
+  <!-- ============================================ FLOATING SHAPES (persistent bg) -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="float-shape float-1" style="width:300px;height:300px;background:#CCFF00;top:10%;left:-5%;"></div>
+    <div class="float-shape float-2" style="width:200px;height:200px;background:#CCFF00;top:60%;right:-3%;"></div>
+    <div class="float-shape float-3" style="width:150px;height:150px;background:#CCFF00;bottom:10%;left:30%;"></div>
+    <div class="float-shape float-1" style="width:100px;height:100px;background:#CCFF00;top:40%;left:70%;animation-delay:-3s;"></div>
+    <div class="float-shape float-2" style="width:250px;height:250px;background:#CCFF00;top:80%;left:60%;animation-delay:-5s;"></div>
+  </div>
+
+  <!-- ============================================ NAV -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-dark-900/80 backdrop-blur-xl border-b border-dark-500/50" id="navbar">
+    <div class="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
+      <a href="#" class="font-heading text-3xl tracking-[0.15em] text-white hover:text-neon-lime transition-colors duration-200">
+        IRON<span class="text-neon-lime">FORGE</span>
+      </a>
+
+      <div class="hidden lg:flex items-center gap-10">
+        <a href="#programs" class="nav-link">PROGRAMS</a>
+        <a href="#about" class="nav-link">ABOUT</a>
+        <a href="#trainers" class="nav-link">TRAINERS</a>
+        <a href="#pricing" class="nav-link">PRICING</a>
+        <a href="#testimonials" class="nav-link">REVIEWS</a>
+        <a href="#faq" class="nav-link">FAQ</a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="#contact" class="btn-mag btn-primary text-sm px-8 py-3 hidden sm:inline-flex">JOIN NOW</a>
+        <button id="hamburger" class="lg:hidden p-2 text-white hover:text-neon-lime transition-colors duration-200" aria-label="Menu">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="lg:hidden flex-col bg-dark-800 border-t border-dark-500/50 px-6 py-6 gap-4">
+      <a href="#programs" class="nav-link text-base py-2" onclick="closeMobile()">PROGRAMS</a>
+      <a href="#about" class="nav-link text-base py-2" onclick="closeMobile()">ABOUT</a>
+      <a href="#trainers" class="nav-link text-base py-2" onclick="closeMobile()">TRAINERS</a>
+      <a href="#pricing" class="nav-link text-base py-2" onclick="closeMobile()">PRICING</a>
+      <a href="#testimonials" class="nav-link text-base py-2" onclick="closeMobile()">REVIEWS</a>
+      <a href="#faq" class="nav-link text-base py-2" onclick="closeMobile()">FAQ</a>
+      <a href="#contact" class="btn-mag btn-primary text-sm px-8 py-3 text-center mt-2">JOIN NOW</a>
+    </div>
+  </nav>
+
+  <!-- ============================================ HERO -->
+  <section id="hero" class="relative min-h-screen flex items-center overflow-hidden bg-grid">
+    <!-- Hero BG layers -->
+    <div class="absolute inset-0 parallax-layer" data-speed="0.3">
+      <img src="https://placehold.co/1920x1080/0a0a0a/1a1a1a?text=." alt="" class="w-full h-full object-cover opacity-20" />
+    </div>
+    <div class="absolute inset-0" style="background: radial-gradient(ellipse 70% 60% at 20% 50%, rgba(204,255,0,0.07) 0%, transparent 70%), radial-gradient(ellipse 50% 50% at 80% 30%, rgba(204,255,0,0.04) 0%, transparent 60%);"></div>
+    <div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(8,8,8,0.4) 0%, transparent 30%, rgba(8,8,8,0.9) 90%, #080808 100%);"></div>
+
+    <!-- Decorative line -->
+    <div class="absolute top-[72px] left-1/2 -translate-x-1/2 w-px h-24 bg-gradient-to-b from-neon-lime/50 to-transparent"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20 w-full">
+      <div class="max-w-4xl">
+        <!-- Badge -->
+        <div class="reveal inline-flex items-center gap-3 bg-neon-lime/5 border border-neon-lime/20 text-neon-lime text-xs font-semibold tracking-[0.25em] uppercase px-5 py-2.5 rounded-full mb-10" style="transition-delay:0.2s">
+          <span class="w-2 h-2 bg-neon-lime rounded-full animate-pulse"></span>
+          NOW OPEN — LIMITED FOUNDING MEMBERSHIPS
+        </div>
+
+        <!-- Main heading with word animation -->
+        <h1 class="font-heading text-[4rem] sm:text-[5.5rem] md:text-[7rem] lg:text-[9rem] leading-[0.88] tracking-[0.02em] mb-8" id="hero-heading">
+          <span class="hero-line">
+            <span class="hero-word" style="transition-delay:0.3s">UNLEASH</span>
+          </span><br/>
+          <span class="hero-line">
+            <span class="hero-word" style="transition-delay:0.45s">THE</span>&nbsp;
+            <span class="hero-word text-neon-lime" style="transition-delay:0.6s">BEAST</span>
+          </span><br/>
+          <span class="hero-line">
+            <span class="hero-word" style="transition-delay:0.75s">WITHIN.</span>
+          </span>
+        </h1>
+
+        <p class="reveal text-steel-300 text-lg md:text-xl leading-[1.8] max-w-xl mb-12" style="transition-delay:0.9s">
+          Premium strength & conditioning facility. World-class equipment. Elite coaching. Zero excuses.
+        </p>
+
+        <!-- CTA buttons -->
+        <div class="reveal flex flex-col sm:flex-row gap-4 mb-8" style="transition-delay:1.05s">
+          <a href="#contact" class="btn-mag btn-primary text-base px-12 py-4">
+            START FREE TRIAL
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+          <a href="#programs" class="btn-mag btn-outline text-base px-12 py-4">EXPLORE PROGRAMS</a>
+        </div>
+
+        <p class="reveal text-steel-500 text-xs tracking-widest uppercase" style="transition-delay:1.2s">No contracts · Cancel anytime · First week free</p>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="reveal mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-dark-500 pt-10" style="transition-delay:1.35s">
+        <div>
+          <div class="font-heading text-5xl md:text-6xl text-neon-lime counter-num" data-target="2500">0</div>
+          <div class="text-steel-400 text-xs mt-2 tracking-[0.15em] uppercase">Members Strong</div>
+        </div>
+        <div>
+          <div class="font-heading text-5xl md:text-6xl text-neon-lime counter-num" data-target="12">0</div>
+          <div class="text-steel-400 text-xs mt-2 tracking-[0.15em] uppercase">Expert Coaches</div>
+        </div>
+        <div>
+          <div class="font-heading text-5xl md:text-6xl text-neon-lime counter-num" data-target="20">0</div>
+          <div class="text-steel-400 text-xs mt-2 tracking-[0.15em] uppercase">Training Programs</div>
+        </div>
+        <div>
+          <div class="font-heading text-5xl md:text-6xl text-neon-lime">4.9<span class="text-3xl">★</span></div>
+          <div class="text-steel-400 text-xs mt-2 tracking-[0.15em] uppercase">Google Rating</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
+      <span class="text-steel-500 text-[10px] tracking-[0.3em] uppercase">Scroll</span>
+      <div class="w-px h-8 bg-gradient-to-b from-steel-500 to-transparent"></div>
+    </div>
+  </section>
+
+  <!-- ============================================ MARQUEE STRIP -->
+  <div class="relative overflow-hidden py-5 bg-neon-lime">
+    <div class="marquee-track font-heading text-dark-900 text-xl tracking-[0.2em]">
+      <span>◆ STRENGTH TRAINING</span><span>◆ HIIT & CARDIO</span><span>◆ CROSSFIT</span>
+      <span>◆ PERSONAL COACHING</span><span>◆ GROUP CLASSES</span><span>◆ NUTRITION PLANS</span>
+      <span>◆ BODY TRANSFORMATION</span><span>◆ BOXING & MMA</span>
+      <span>◆ STRENGTH TRAINING</span><span>◆ HIIT & CARDIO</span><span>◆ CROSSFIT</span>
+      <span>◆ PERSONAL COACHING</span><span>◆ GROUP CLASSES</span><span>◆ NUTRITION PLANS</span>
+      <span>◆ BODY TRANSFORMATION</span><span>◆ BOXING & MMA</span>
+    </div>
+  </div>
+
+  <!-- ============================================ PROGRAMS -->
+  <section id="programs" class="py-32 px-6 relative">
+    <div class="max-w-7xl mx-auto">
+      <div class="reveal text-center mb-20">
+        <span class="text-neon-lime text-xs font-semibold tracking-[0.3em] uppercase">What We Offer</span>
+        <h2 class="font-heading text-5xl md:text-7xl tracking-[0.02em] mt-4">
+          TRAINING <span class="text-neon-lime">PROGRAMS</span>
+        </h2>
+        <div class="section-divider mt-6"></div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
+        <!-- Program 1 -->
+        <div class="reveal prog-card aspect-[3/4] group" style="--i:0">
+          <img src="https://placehold.co/600x800/111111/222222?text=Strength" alt="Strength Training" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent"></div>
+          <div class="absolute inset-0 bg-neon-lime/0 group-hover:bg-neon-lime/5 transition-colors duration-500"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-8">
+            <div class="prog-line mb-4"></div>
+            <span class="text-neon-lime text-[10px] font-bold tracking-[0.3em] uppercase">Power</span>
+            <h3 class="font-heading text-3xl tracking-wide mt-1">STRENGTH TRAINING</h3>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0" style="transition: opacity 0.5s ease, transform 0.5s ease;">Compound lifts, progressive overload, and raw power development under expert eyes.</p>
+          </div>
+        </div>
+
+        <!-- Program 2 -->
+        <div class="reveal prog-card aspect-[3/4] group" style="--i:1">
+          <img src="https://placehold.co/600x800/111111/222222?text=HIIT" alt="HIIT" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent"></div>
+          <div class="absolute inset-0 bg-neon-lime/0 group-hover:bg-neon-lime/5 transition-colors duration-500"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-8">
+            <div class="prog-line mb-4"></div>
+            <span class="text-neon-lime text-[10px] font-bold tracking-[0.3em] uppercase">Endurance</span>
+            <h3 class="font-heading text-3xl tracking-wide mt-1">HIIT & CARDIO</h3>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0" style="transition: opacity 0.5s ease, transform 0.5s ease;">Maximum calorie burn. Explosive intervals that torch fat and build endurance.</p>
+          </div>
+        </div>
+
+        <!-- Program 3 -->
+        <div class="reveal prog-card aspect-[3/4] group" style="--i:2">
+          <img src="https://placehold.co/600x800/111111/222222?text=CrossFit" alt="CrossFit" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent"></div>
+          <div class="absolute inset-0 bg-neon-lime/0 group-hover:bg-neon-lime/5 transition-colors duration-500"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-8">
+            <div class="prog-line mb-4"></div>
+            <span class="text-neon-lime text-[10px] font-bold tracking-[0.3em] uppercase">Functional</span>
+            <h3 class="font-heading text-3xl tracking-wide mt-1">CROSSFIT</h3>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0" style="transition: opacity 0.5s ease, transform 0.5s ease;">Functional movements at high intensity. Build a body that's fit for anything life throws at you.</p>
+          </div>
+        </div>
+
+        <!-- Program 4 -->
+        <div class="reveal prog-card aspect-[3/4] group" style="--i:3">
+          <img src="https://placehold.co/600x800/111111/222222?text=Boxing" alt="Boxing" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent"></div>
+          <div class="absolute inset-0 bg-neon-lime/0 group-hover:bg-neon-lime/5 transition-colors duration-500"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-8">
+            <div class="prog-line mb-4"></div>
+            <span class="text-neon-lime text-[10px] font-bold tracking-[0.3em] uppercase">Combat</span>
+            <h3 class="font-heading text-3xl tracking-wide mt-1">BOXING & MMA</h3>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0" style="transition: opacity 0.5s ease, transform 0.5s ease;">Learn to fight, defend, and build unshakeable confidence and conditioning.</p>
+          </div>
+        </div>
+
+        <!-- Program 5 -->
+        <div class="reveal prog-card aspect-[3/4] group" style="--i:4">
+          <img src="https://placehold.co/600x800/111111/222222?text=Yoga" alt="Yoga" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent"></div>
+          <div class="absolute inset-0 bg-neon-lime/0 group-hover:bg-neon-lime/5 transition-colors duration-500"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-8">
+            <div class="prog-line mb-4"></div>
+            <span class="text-neon-lime text-[10px] font-bold tracking-[0.3em] uppercase">Recovery</span>
+            <h3 class="font-heading text-3xl tracking-wide mt-1">YOGA & MOBILITY</h3>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0" style="transition: opacity 0.5s ease, transform 0.5s ease;">Restore, stretch, and build flexibility. The perfect complement to heavy training.</p>
+          </div>
+        </div>
+
+        <!-- Program 6 -->
+        <div class="reveal prog-card aspect-[3/4] group" style="--i:5">
+          <img src="https://placehold.co/600x800/111111/222222?text=Personal" alt="Personal Training" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent"></div>
+          <div class="absolute inset-0 bg-neon-lime/0 group-hover:bg-neon-lime/5 transition-colors duration-500"></div>
+          <div class="absolute bottom-0 left-0 right-0 p-8">
+            <div class="prog-line mb-4"></div>
+            <span class="text-neon-lime text-[10px] font-bold tracking-[0.3em] uppercase">1-on-1</span>
+            <h3 class="font-heading text-3xl tracking-wide mt-1">PERSONAL TRAINING</h3>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0" style="transition: opacity 0.5s ease, transform 0.5s ease;">Dedicated coach, custom programming, and accountability to reach your goals faster.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ ABOUT / WHY US -->
+  <section id="about" class="py-32 px-6 bg-dark-800 relative overflow-hidden">
+    <!-- BG accent -->
+    <div class="absolute top-0 right-0 w-1/2 h-full" style="background: radial-gradient(ellipse 80% 80% at 80% 50%, rgba(204,255,0,0.03) 0%, transparent 70%);"></div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <!-- Left: Image stack -->
+        <div class="relative">
+          <div class="reveal-left">
+            <div class="relative rounded-2xl overflow-hidden glow-border">
+              <img src="https://placehold.co/700x500/111111/1a1a1a?text=Gym+Interior" alt="Gym Interior" class="w-full aspect-[4/3] object-cover" />
+              <div class="absolute inset-0 bg-gradient-to-t from-dark-900/60 to-transparent mix-blend-multiply"></div>
+            </div>
+          </div>
+          <!-- Floating badge -->
+          <div class="reveal-scale absolute -bottom-6 -right-4 md:right-8 bg-neon-lime text-dark-900 px-6 py-4 rounded-xl shadow-2xl" style="transition-delay:0.3s">
+            <div class="font-heading text-4xl">10+</div>
+            <div class="text-xs font-bold tracking-wider uppercase">Years Experience</div>
+          </div>
+        </div>
+
+        <!-- Right: Content -->
+        <div>
+          <div class="reveal">
+            <span class="text-neon-lime text-xs font-semibold tracking-[0.3em] uppercase">Why IRONFORGE</span>
+            <h2 class="font-heading text-5xl md:text-6xl tracking-[0.02em] mt-4 mb-8">
+              NOT JUST A GYM.<br/><span class="text-neon-lime">A MOVEMENT.</span>
+            </h2>
+          </div>
+
+          <div class="space-y-8">
+            <!-- Feature 1 -->
+            <div class="reveal flex gap-5" style="transition-delay:0.15s">
+              <div class="flex-shrink-0 w-12 h-12 bg-neon-lime/10 border border-neon-lime/20 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-neon-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-heading text-2xl tracking-wide mb-1">WORLD-CLASS EQUIPMENT</h3>
+                <p class="text-steel-400 text-sm leading-[1.8]">Rogue, Hammer Strength, Eleiko — we invest in the gear that elite athletes demand.</p>
+              </div>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="reveal flex gap-5" style="transition-delay:0.3s">
+              <div class="flex-shrink-0 w-12 h-12 bg-neon-lime/10 border border-neon-lime/20 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-neon-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-heading text-2xl tracking-wide mb-1">CERTIFIED COACHES</h3>
+                <p class="text-steel-400 text-sm leading-[1.8]">Every coach is nationally certified with 5+ years real-world experience transforming bodies.</p>
+              </div>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="reveal flex gap-5" style="transition-delay:0.45s">
+              <div class="flex-shrink-0 w-12 h-12 bg-neon-lime/10 border border-neon-lime/20 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-neon-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-heading text-2xl tracking-wide mb-1">RESULTS GUARANTEED</h3>
+                <p class="text-steel-400 text-sm leading-[1.8]">Follow our program for 90 days. If you don't see results, your next month is on us.</p>
+              </div>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="reveal flex gap-5" style="transition-delay:0.6s">
+              <div class="flex-shrink-0 w-12 h-12 bg-neon-lime/10 border border-neon-lime/20 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-neon-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-heading text-2xl tracking-wide mb-1">24/7 ACCESS</h3>
+                <p class="text-steel-400 text-sm leading-[1.8]">Train when it suits you. Early bird or night owl — the gym is always open.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ BIG TEXT DIVIDER -->
+  <div class="py-20 overflow-hidden relative">
+    <div class="flex items-center justify-center">
+      <h2 class="font-heading text-[6rem] sm:text-[10rem] md:text-[14rem] text-dark-600 tracking-[0.05em] whitespace-nowrap select-none opacity-30" style="animation: marquee 20s linear infinite;">
+        PUSH HARDER ◆ LIFT HEAVIER ◆ GROW STRONGER ◆ PUSH HARDER ◆ LIFT HEAVIER ◆ GROW STRONGER ◆
+      </h2>
+    </div>
+  </div>
+
+  <!-- ============================================ TRAINERS -->
+  <section id="trainers" class="py-32 px-6 bg-dark-800">
+    <div class="max-w-7xl mx-auto">
+      <div class="reveal text-center mb-20">
+        <span class="text-neon-lime text-xs font-semibold tracking-[0.3em] uppercase">Meet The Team</span>
+        <h2 class="font-heading text-5xl md:text-7xl tracking-[0.02em] mt-4">
+          ELITE <span class="text-neon-lime">COACHES</span>
+        </h2>
+        <div class="section-divider mt-6"></div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger">
+        <!-- Trainer 1 -->
+        <div class="reveal trainer-card tilt-card bg-dark-700 rounded-2xl overflow-hidden group" style="--i:0">
+          <div class="relative aspect-[3/4] overflow-hidden">
+            <img src="https://placehold.co/400x530/111111/222222?text=Coach+1" alt="Trainer" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent"></div>
+            <div class="trainer-social absolute bottom-4 left-4 right-4 flex gap-2">
+              <span class="w-10 h-10 bg-dark-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-neon-lime text-sm hover:bg-neon-lime hover:text-dark-900 transition-colors duration-200 cursor-pointer">IG</span>
+              <span class="w-10 h-10 bg-dark-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-neon-lime text-sm hover:bg-neon-lime hover:text-dark-900 transition-colors duration-200 cursor-pointer">FB</span>
+            </div>
+          </div>
+          <div class="p-5">
+            <h3 class="font-heading text-2xl tracking-wide">RAHUL KAPOOR</h3>
+            <p class="text-neon-lime text-xs tracking-[0.2em] uppercase mt-1">Head Strength Coach</p>
+          </div>
+        </div>
+
+        <!-- Trainer 2 -->
+        <div class="reveal trainer-card tilt-card bg-dark-700 rounded-2xl overflow-hidden group" style="--i:1">
+          <div class="relative aspect-[3/4] overflow-hidden">
+            <img src="https://placehold.co/400x530/111111/222222?text=Coach+2" alt="Trainer" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent"></div>
+            <div class="trainer-social absolute bottom-4 left-4 right-4 flex gap-2">
+              <span class="w-10 h-10 bg-dark-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-neon-lime text-sm hover:bg-neon-lime hover:text-dark-900 transition-colors duration-200 cursor-pointer">IG</span>
+              <span class="w-10 h-10 bg-dark-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-neon-lime text-sm hover:bg-neon-lime hover:text-dark-900 transition-colors duration-200 cursor-pointer">FB</span>
+            </div>
+          </div>
+          <div class="p-5">
+            <h3 class="font-heading text-2xl tracking-wide">PRIYA SHARMA</h3>
+            <p class="text-neon-lime text-xs tracking-[0.2em] uppercase mt-1">CrossFit & HIIT</p>
+          </div>
+        </div>
+
+        <!-- Trainer 3 -->
+        <div class="reveal trainer-card tilt-card bg-dark-700 rounded-2xl overflow-hidden group" style="--i:2">
+          <div class="relative aspect-[3/4] overflow-hidden">
+            <img src="https://placehold.co/400x530/111111/222222?text=Coach+3" alt="Trainer" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent"></div>
+            <div class="trainer-social absolute bottom-4 left-4 right-4 flex gap-2">
+              <span class="w-10 h-10 bg-dark-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-neon-lime text-sm hover:bg-neon-lime hover:text-dark-900 transition-colors duration-200 cursor-pointer">IG</span>
+              <span class="w-10 h-10 bg-dark-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-neon-lime text-sm hover:bg-neon-lime hover:text-dark-900 transition-colors duration-200 cursor-pointer">FB</span>
+            </div>
+          </div>
+          <div class="p-5">
+            <h3 class="font-heading text-2xl tracking-wide">VIKRAM SINGH</h3>
+            <p class="text-neon-lime text-xs tracking-[0.2em] uppercase mt-1">Boxing & MMA</p>
+          </div>
+        </div>
+
+        <!-- Trainer 4 -->
+        <div class="reveal trainer-card tilt-card bg-dark-700 rounded-2xl overflow-hidden group" style="--i:3">
+          <div class="relative aspect-[3/4] overflow-hidden">
+            <img src="https://placehold.co/400x530/111111/222222?text=Coach+4" alt="Trainer" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent"></div>
+            <div class="trainer-social absolute bottom-4 left-4 right-4 flex gap-2">
+              <span class="w-10 h-10 bg-dark-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-neon-lime text-sm hover:bg-neon-lime hover:text-dark-900 transition-colors duration-200 cursor-pointer">IG</span>
+              <span class="w-10 h-10 bg-dark-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-neon-lime text-sm hover:bg-neon-lime hover:text-dark-900 transition-colors duration-200 cursor-pointer">FB</span>
+            </div>
+          </div>
+          <div class="p-5">
+            <h3 class="font-heading text-2xl tracking-wide">ANITA DESAI</h3>
+            <p class="text-neon-lime text-xs tracking-[0.2em] uppercase mt-1">Yoga & Mobility</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ PRICING -->
+  <section id="pricing" class="py-32 px-6 relative">
+    <div class="absolute inset-0 bg-grid opacity-50"></div>
+    <div class="max-w-6xl mx-auto relative z-10">
+      <div class="reveal text-center mb-20">
+        <span class="text-neon-lime text-xs font-semibold tracking-[0.3em] uppercase">Simple Pricing</span>
+        <h2 class="font-heading text-5xl md:text-7xl tracking-[0.02em] mt-4">
+          CHOOSE YOUR <span class="text-neon-lime">PLAN</span>
+        </h2>
+        <div class="section-divider mt-6"></div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6 stagger">
+        <!-- Basic -->
+        <div class="reveal tilt-card bg-dark-700 border border-dark-500 rounded-2xl p-8 flex flex-col" style="--i:0">
+          <div class="mb-8">
+            <h3 class="font-heading text-3xl tracking-wide">STARTER</h3>
+            <p class="text-steel-400 text-sm mt-2">Perfect for beginners</p>
+          </div>
+          <div class="mb-8">
+            <span class="font-heading text-6xl text-white">₹1,499</span>
+            <span class="text-steel-400 text-sm">/month</span>
+          </div>
+          <ul class="space-y-4 mb-10 flex-1">
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Full gym access</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Locker & shower</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Free fitness assessment</li>
+            <li class="flex items-center gap-3 text-sm text-steel-500"><svg class="w-5 h-5 text-steel-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Group classes</li>
+            <li class="flex items-center gap-3 text-sm text-steel-500"><svg class="w-5 h-5 text-steel-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Personal training</li>
+          </ul>
+          <a href="#contact" class="btn-mag btn-outline text-sm w-full py-4 text-center">GET STARTED</a>
+        </div>
+
+        <!-- Pro (Popular) -->
+        <div class="reveal tilt-card price-popular bg-dark-700 rounded-2xl p-8 flex flex-col relative" style="--i:1">
+          <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-neon-lime text-dark-900 text-[10px] font-bold tracking-[0.2em] uppercase px-4 py-1.5 rounded-full">Most Popular</div>
+          <div class="mb-8">
+            <h3 class="font-heading text-3xl tracking-wide text-neon-lime">PRO</h3>
+            <p class="text-steel-400 text-sm mt-2">For serious athletes</p>
+          </div>
+          <div class="mb-8">
+            <span class="font-heading text-6xl text-white">₹2,999</span>
+            <span class="text-steel-400 text-sm">/month</span>
+          </div>
+          <ul class="space-y-4 mb-10 flex-1">
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Full gym access (24/7)</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> All group classes</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Nutrition plan</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Body composition tracking</li>
+            <li class="flex items-center gap-3 text-sm text-steel-500"><svg class="w-5 h-5 text-steel-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> 1-on-1 personal training</li>
+          </ul>
+          <a href="#contact" class="btn-mag btn-primary text-sm w-full py-4 text-center">GET STARTED</a>
+        </div>
+
+        <!-- Elite -->
+        <div class="reveal tilt-card bg-dark-700 border border-dark-500 rounded-2xl p-8 flex flex-col" style="--i:2">
+          <div class="mb-8">
+            <h3 class="font-heading text-3xl tracking-wide">ELITE</h3>
+            <p class="text-steel-400 text-sm mt-2">The ultimate experience</p>
+          </div>
+          <div class="mb-8">
+            <span class="font-heading text-6xl text-white">₹5,999</span>
+            <span class="text-steel-400 text-sm">/month</span>
+          </div>
+          <ul class="space-y-4 mb-10 flex-1">
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Everything in Pro</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 3x personal training/week</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Custom meal plans</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Recovery zone access</li>
+            <li class="flex items-center gap-3 text-sm text-steel-200"><svg class="w-5 h-5 text-neon-lime flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Priority booking</li>
+          </ul>
+          <a href="#contact" class="btn-mag btn-outline text-sm w-full py-4 text-center">GET STARTED</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ TRANSFORMATION / SOCIAL PROOF -->
+  <section class="py-32 px-6 bg-dark-800 relative overflow-hidden">
+    <div class="absolute inset-0" style="background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(204,255,0,0.04) 0%, transparent 70%);"></div>
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="reveal text-center mb-20">
+        <span class="text-neon-lime text-xs font-semibold tracking-[0.3em] uppercase">Real Results</span>
+        <h2 class="font-heading text-5xl md:text-7xl tracking-[0.02em] mt-4">
+          TRANSFORMATIONS THAT <span class="text-neon-lime">SPEAK</span>
+        </h2>
+        <div class="section-divider mt-6"></div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8 stagger">
+        <!-- Transformation 1 -->
+        <div class="reveal tilt-card bg-dark-700 rounded-2xl overflow-hidden border border-dark-500" style="--i:0">
+          <div class="grid grid-cols-2 gap-1">
+            <div class="relative">
+              <img src="https://placehold.co/300x350/111111/333333?text=Before" alt="Before" class="w-full aspect-[3/4] object-cover" />
+              <span class="absolute top-3 left-3 bg-dark-900/80 text-steel-300 text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">Before</span>
+            </div>
+            <div class="relative">
+              <img src="https://placehold.co/300x350/111111/333333?text=After" alt="After" class="w-full aspect-[3/4] object-cover" />
+              <span class="absolute top-3 left-3 bg-neon-lime/90 text-dark-900 text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">After</span>
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="font-heading text-2xl">RAJESH M.</h3>
+            <p class="text-neon-lime text-xs tracking-[0.15em] uppercase mt-1">Lost 18kg in 4 months</p>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed">"IronForge completely changed my life. The coaches kept me accountable every single day."</p>
+          </div>
+        </div>
+
+        <!-- Transformation 2 -->
+        <div class="reveal tilt-card bg-dark-700 rounded-2xl overflow-hidden border border-dark-500" style="--i:1">
+          <div class="grid grid-cols-2 gap-1">
+            <div class="relative">
+              <img src="https://placehold.co/300x350/111111/333333?text=Before" alt="Before" class="w-full aspect-[3/4] object-cover" />
+              <span class="absolute top-3 left-3 bg-dark-900/80 text-steel-300 text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">Before</span>
+            </div>
+            <div class="relative">
+              <img src="https://placehold.co/300x350/111111/333333?text=After" alt="After" class="w-full aspect-[3/4] object-cover" />
+              <span class="absolute top-3 left-3 bg-neon-lime/90 text-dark-900 text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">After</span>
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="font-heading text-2xl">SNEHA K.</h3>
+            <p class="text-neon-lime text-xs tracking-[0.15em] uppercase mt-1">Gained 8kg lean muscle</p>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed">"From skinny to strong. The personal training program here is next level."</p>
+          </div>
+        </div>
+
+        <!-- Transformation 3 -->
+        <div class="reveal tilt-card bg-dark-700 rounded-2xl overflow-hidden border border-dark-500" style="--i:2">
+          <div class="grid grid-cols-2 gap-1">
+            <div class="relative">
+              <img src="https://placehold.co/300x350/111111/333333?text=Before" alt="Before" class="w-full aspect-[3/4] object-cover" />
+              <span class="absolute top-3 left-3 bg-dark-900/80 text-steel-300 text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">Before</span>
+            </div>
+            <div class="relative">
+              <img src="https://placehold.co/300x350/111111/333333?text=After" alt="After" class="w-full aspect-[3/4] object-cover" />
+              <span class="absolute top-3 left-3 bg-neon-lime/90 text-dark-900 text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">After</span>
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="font-heading text-2xl">AMIT P.</h3>
+            <p class="text-neon-lime text-xs tracking-[0.15em] uppercase mt-1">Complete body recomp</p>
+            <p class="text-steel-400 text-sm mt-3 leading-relaxed">"Best investment I ever made. Not just physical — my confidence and energy are through the roof."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ TESTIMONIALS -->
+  <section id="testimonials" class="py-32 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="reveal text-center mb-20">
+        <span class="text-neon-lime text-xs font-semibold tracking-[0.3em] uppercase">Member Love</span>
+        <h2 class="font-heading text-5xl md:text-7xl tracking-[0.02em] mt-4">
+          WHAT THEY <span class="text-neon-lime">SAY</span>
+        </h2>
+        <div class="section-divider mt-6"></div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6 stagger">
+        <div class="reveal tilt-card bg-dark-700 border border-dark-500 rounded-2xl p-8" style="--i:0">
+          <div class="flex gap-1 mb-6">
+            <span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span>
+          </div>
+          <p class="text-steel-300 text-sm leading-[1.8] mb-8">"The atmosphere here is electric. Every time I walk in, I'm motivated to push harder. The trainers remember your name, your goals, your struggles. That personal touch makes all the difference."</p>
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-neon-lime/10 rounded-full flex items-center justify-center font-heading text-xl text-neon-lime">D</div>
+            <div>
+              <div class="font-heading text-lg">DEEPAK R.</div>
+              <div class="text-steel-500 text-xs">Member since 2023</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal tilt-card bg-dark-700 border border-dark-500 rounded-2xl p-8" style="--i:1">
+          <div class="flex gap-1 mb-6">
+            <span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span>
+          </div>
+          <p class="text-steel-300 text-sm leading-[1.8] mb-8">"I've been to 5 gyms in this city. IronForge is the only one where I feel like I belong. The equipment is spotless, the coaching is world-class, and the community is incredible."</p>
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-neon-lime/10 rounded-full flex items-center justify-center font-heading text-xl text-neon-lime">M</div>
+            <div>
+              <div class="font-heading text-lg">MEERA S.</div>
+              <div class="text-steel-500 text-xs">Member since 2024</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal tilt-card bg-dark-700 border border-dark-500 rounded-2xl p-8" style="--i:2">
+          <div class="flex gap-1 mb-6">
+            <span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span><span class="text-neon-lime text-lg">★</span>
+          </div>
+          <p class="text-steel-300 text-sm leading-[1.8] mb-8">"Lost 22 kgs and gained a new identity. IronForge isn't just a gym, it's a movement. Coach Rahul literally changed my life with his no-nonsense approach and real accountability."</p>
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-neon-lime/10 rounded-full flex items-center justify-center font-heading text-xl text-neon-lime">K</div>
+            <div>
+              <div class="font-heading text-lg">KARTHIK V.</div>
+              <div class="text-steel-500 text-xs">Member since 2022</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ FAQ -->
+  <section id="faq" class="py-32 px-6 bg-dark-800">
+    <div class="max-w-3xl mx-auto">
+      <div class="reveal text-center mb-16">
+        <span class="text-neon-lime text-xs font-semibold tracking-[0.3em] uppercase">Got Questions?</span>
+        <h2 class="font-heading text-5xl md:text-7xl tracking-[0.02em] mt-4">
+          FAQ
+        </h2>
+        <div class="section-divider mt-6"></div>
+      </div>
+
+      <div class="reveal" style="transition-delay:0.15s">
+        <div class="faq-item open">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            <span class="font-heading text-xl tracking-wide">DO YOU OFFER A FREE TRIAL?</span>
+            <span class="faq-icon text-2xl">+</span>
+          </div>
+          <div class="faq-a">
+            <p class="text-steel-400 text-sm leading-[1.8] pb-2">Yes! Every new member gets a free 7-day trial with full access to all equipment, classes, and facilities. No credit card required.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            <span class="font-heading text-xl tracking-wide">WHAT ARE THE GYM HOURS?</span>
+            <span class="faq-icon text-2xl">+</span>
+          </div>
+          <div class="faq-a">
+            <p class="text-steel-400 text-sm leading-[1.8] pb-2">Pro and Elite members get 24/7 access. Starter members can train from 5 AM to 11 PM, 7 days a week.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            <span class="font-heading text-xl tracking-wide">IS PERSONAL TRAINING INCLUDED?</span>
+            <span class="faq-icon text-2xl">+</span>
+          </div>
+          <div class="faq-a">
+            <p class="text-steel-400 text-sm leading-[1.8] pb-2">Personal training is included in the Elite plan (3 sessions/week). Pro and Starter members can add PT sessions at a discounted rate.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            <span class="font-heading text-xl tracking-wide">CAN I CANCEL ANYTIME?</span>
+            <span class="faq-icon text-2xl">+</span>
+          </div>
+          <div class="faq-a">
+            <p class="text-steel-400 text-sm leading-[1.8] pb-2">Absolutely. No lock-in contracts, no cancellation fees. You can cancel your membership at any time — we believe in earning your loyalty every month.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            <span class="font-heading text-xl tracking-wide">DO YOU HAVE PARKING?</span>
+            <span class="faq-icon text-2xl">+</span>
+          </div>
+          <div class="faq-a">
+            <p class="text-steel-400 text-sm leading-[1.8] pb-2">Yes, free dedicated parking for all members with space for 50+ vehicles including two-wheelers and cars.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ CTA SECTION -->
+  <section class="py-32 px-6 relative overflow-hidden">
+    <div class="absolute inset-0" style="background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(204,255,0,0.08) 0%, transparent 60%);"></div>
+    <div class="max-w-4xl mx-auto text-center relative z-10">
+      <div class="reveal">
+        <h2 class="font-heading text-5xl sm:text-7xl md:text-8xl tracking-[0.02em] leading-[0.9]">
+          YOUR BEST BODY<br/><span class="text-neon-lime">STARTS TODAY.</span>
+        </h2>
+        <p class="text-steel-300 text-lg md:text-xl leading-[1.8] mt-8 max-w-2xl mx-auto">
+          Stop thinking about it. Walk in, start training, and see the change. First week is on us.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mt-12">
+          <a href="#contact" class="btn-mag btn-primary text-lg px-14 py-5">
+            CLAIM FREE TRIAL
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+          <a href="https://wa.me/91XXXXXXXXXX" target="_blank" rel="noopener" class="btn-mag btn-outline text-lg px-14 py-5">WHATSAPP US</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ CONTACT -->
+  <section id="contact" class="py-32 px-6 bg-dark-800">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid lg:grid-cols-2 gap-16">
+        <!-- Left -->
+        <div class="reveal-left">
+          <span class="text-neon-lime text-xs font-semibold tracking-[0.3em] uppercase">Get In Touch</span>
+          <h2 class="font-heading text-5xl md:text-6xl tracking-[0.02em] mt-4 mb-8">
+            READY TO<br/><span class="text-neon-lime">START?</span>
+          </h2>
+          <p class="text-steel-400 text-base leading-[1.8] mb-10">
+            Fill out the form and we'll get back to you within 2 hours. Or just walk in — we'd love to show you around.
+          </p>
+
+          <div class="space-y-6">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-neon-lime/10 border border-neon-lime/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-neon-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <div>
+                <div class="font-heading text-lg tracking-wide">LOCATION</div>
+                <p class="text-steel-400 text-sm">MG Road, Vijayawada, Andhra Pradesh 520010</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-neon-lime/10 border border-neon-lime/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-neon-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+              </div>
+              <div>
+                <div class="font-heading text-lg tracking-wide">PHONE</div>
+                <p class="text-steel-400 text-sm">+91 9876 543 210</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-neon-lime/10 border border-neon-lime/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-neon-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <div class="font-heading text-lg tracking-wide">HOURS</div>
+                <p class="text-steel-400 text-sm">24/7 for Pro & Elite · 5AM–11PM for Starter</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Form -->
+        <div class="reveal-right">
+          <form class="bg-dark-700 border border-dark-500 rounded-2xl p-8 space-y-5" onsubmit="event.preventDefault(); alert('Thanks! We\'ll contact you within 2 hours.');">
+            <div class="grid sm:grid-cols-2 gap-5">
+              <div>
+                <label class="text-xs text-steel-400 tracking-wider uppercase mb-2 block">First Name</label>
+                <input type="text" required class="w-full bg-dark-600 border border-dark-500 rounded-lg px-4 py-3.5 text-sm text-white placeholder-steel-500 focus:outline-none focus:border-neon-lime/50 transition-colors duration-200" placeholder="John" />
+              </div>
+              <div>
+                <label class="text-xs text-steel-400 tracking-wider uppercase mb-2 block">Last Name</label>
+                <input type="text" required class="w-full bg-dark-600 border border-dark-500 rounded-lg px-4 py-3.5 text-sm text-white placeholder-steel-500 focus:outline-none focus:border-neon-lime/50 transition-colors duration-200" placeholder="Doe" />
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-steel-400 tracking-wider uppercase mb-2 block">Phone</label>
+              <input type="tel" required class="w-full bg-dark-600 border border-dark-500 rounded-lg px-4 py-3.5 text-sm text-white placeholder-steel-500 focus:outline-none focus:border-neon-lime/50 transition-colors duration-200" placeholder="+91 98765 43210" />
+            </div>
+            <div>
+              <label class="text-xs text-steel-400 tracking-wider uppercase mb-2 block">Email</label>
+              <input type="email" class="w-full bg-dark-600 border border-dark-500 rounded-lg px-4 py-3.5 text-sm text-white placeholder-steel-500 focus:outline-none focus:border-neon-lime/50 transition-colors duration-200" placeholder="john@example.com" />
+            </div>
+            <div>
+              <label class="text-xs text-steel-400 tracking-wider uppercase mb-2 block">Interested In</label>
+              <select class="w-full bg-dark-600 border border-dark-500 rounded-lg px-4 py-3.5 text-sm text-white focus:outline-none focus:border-neon-lime/50 transition-colors duration-200">
+                <option>General Membership</option>
+                <option>Personal Training</option>
+                <option>Group Classes</option>
+                <option>CrossFit</option>
+                <option>Boxing & MMA</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-steel-400 tracking-wider uppercase mb-2 block">Message (Optional)</label>
+              <textarea rows="3" class="w-full bg-dark-600 border border-dark-500 rounded-lg px-4 py-3.5 text-sm text-white placeholder-steel-500 focus:outline-none focus:border-neon-lime/50 transition-colors duration-200 resize-none" placeholder="Tell us about your fitness goals..."></textarea>
+            </div>
+            <button type="submit" class="btn-mag btn-primary w-full py-4 text-base">
+              SEND MESSAGE
+              <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ FOOTER -->
+  <footer class="border-t border-dark-500 py-16 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
+        <div>
+          <span class="font-heading text-3xl tracking-[0.15em]">IRON<span class="text-neon-lime">FORGE</span></span>
+          <p class="text-steel-400 text-sm leading-[1.8] mt-4">Premium strength & conditioning facility. Build your best body with world-class coaching and equipment.</p>
+        </div>
+        <div>
+          <h4 class="font-heading text-lg tracking-wide mb-4">QUICK LINKS</h4>
+          <div class="flex flex-col gap-3">
+            <a href="#programs" class="text-steel-400 text-sm hover:text-neon-lime transition-colors duration-200">Programs</a>
+            <a href="#pricing" class="text-steel-400 text-sm hover:text-neon-lime transition-colors duration-200">Pricing</a>
+            <a href="#trainers" class="text-steel-400 text-sm hover:text-neon-lime transition-colors duration-200">Trainers</a>
+            <a href="#faq" class="text-steel-400 text-sm hover:text-neon-lime transition-colors duration-200">FAQ</a>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-heading text-lg tracking-wide mb-4">PROGRAMS</h4>
+          <div class="flex flex-col gap-3">
+            <span class="text-steel-400 text-sm">Strength Training</span>
+            <span class="text-steel-400 text-sm">HIIT & Cardio</span>
+            <span class="text-steel-400 text-sm">CrossFit</span>
+            <span class="text-steel-400 text-sm">Boxing & MMA</span>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-heading text-lg tracking-wide mb-4">FOLLOW US</h4>
+          <div class="flex gap-3">
+            <a href="#" class="w-11 h-11 bg-dark-600 border border-dark-500 rounded-lg flex items-center justify-center text-steel-400 hover:bg-neon-lime hover:text-dark-900 hover:border-neon-lime transition-colors duration-200 text-sm font-bold">IG</a>
+            <a href="#" class="w-11 h-11 bg-dark-600 border border-dark-500 rounded-lg flex items-center justify-center text-steel-400 hover:bg-neon-lime hover:text-dark-900 hover:border-neon-lime transition-colors duration-200 text-sm font-bold">FB</a>
+            <a href="#" class="w-11 h-11 bg-dark-600 border border-dark-500 rounded-lg flex items-center justify-center text-steel-400 hover:bg-neon-lime hover:text-dark-900 hover:border-neon-lime transition-colors duration-200 text-sm font-bold">YT</a>
+            <a href="#" class="w-11 h-11 bg-dark-600 border border-dark-500 rounded-lg flex items-center justify-center text-steel-400 hover:bg-neon-lime hover:text-dark-900 hover:border-neon-lime transition-colors duration-200 text-sm font-bold">X</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-dark-500 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-steel-500 text-xs tracking-wide">&copy; 2026 IronForge Gym. All rights reserved.</p>
+        <div class="flex gap-6">
+          <a href="#" class="text-steel-500 text-xs hover:text-steel-200 transition-colors duration-200">Privacy Policy</a>
+          <a href="#" class="text-steel-500 text-xs hover:text-steel-200 transition-colors duration-200">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================ BACK TO TOP -->
+  <button id="back-top" class="fixed bottom-6 right-6 w-12 h-12 bg-neon-lime text-dark-900 rounded-full flex items-center justify-center shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50 hover:scale-110" style="transition: opacity 0.3s ease, transform 0.2s ease;" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+  </button>
+
+  <!-- ============================================ JAVASCRIPT -->
+  <script>
+    // ===== PRELOADER =====
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('preloader').classList.add('hide');
+        // trigger hero animations after preloader
+        setTimeout(triggerHeroWords, 300);
+      }, 2000);
+    });
+
+    // ===== HERO WORD REVEAL =====
+    function triggerHeroWords() {
+      document.querySelectorAll('.hero-word').forEach((word, i) => {
+        setTimeout(() => word.classList.add('show'), i * 150);
+      });
+      // Also trigger initial reveals in viewport
+      observeReveals();
+    }
+
+    // ===== SCROLL REVEAL (Intersection Observer) =====
+    function observeReveals() {
+      const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+      els.forEach(el => obs.observe(el));
+    }
+
+    // ===== COUNTER ANIMATION =====
+    function animateCounters() {
+      const counters = document.querySelectorAll('.counter-num[data-target]');
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            const target = parseInt(el.dataset.target);
+            const duration = 2000;
+            const start = performance.now();
+            const step = (now) => {
+              const progress = Math.min((now - start) / duration, 1);
+              const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+              el.textContent = Math.floor(eased * target).toLocaleString() + (target >= 100 ? '+' : '+');
+              if (progress < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+            obs.unobserve(el);
+          }
+        });
+      }, { threshold: 0.5 });
+      counters.forEach(c => obs.observe(c));
+    }
+    animateCounters();
+
+    // ===== SCROLL PROGRESS BAR =====
+    window.addEventListener('scroll', () => {
+      const winH = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = (window.scrollY / winH) * 100;
+      document.getElementById('scroll-progress').style.width = scrolled + '%';
+    });
+
+    // ===== CURSOR GLOW =====
+    const glow = document.getElementById('cursor-glow');
+    let mouseX = 0, mouseY = 0, glowX = 0, glowY = 0;
+    document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+    function updateGlow() {
+      glowX += (mouseX - glowX) * 0.08;
+      glowY += (mouseY - glowY) * 0.08;
+      glow.style.left = glowX + 'px';
+      glow.style.top = glowY + 'px';
+      requestAnimationFrame(updateGlow);
+    }
+    updateGlow();
+
+    // ===== NAVBAR SCROLL EFFECT =====
+    const nav = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        nav.style.background = 'rgba(8,8,8,0.95)';
+        nav.style.boxShadow = '0 4px 30px rgba(0,0,0,0.3)';
+      } else {
+        nav.style.background = 'rgba(8,8,8,0.8)';
+        nav.style.boxShadow = 'none';
+      }
+    });
+
+    // ===== BACK TO TOP BUTTON =====
+    const backTop = document.getElementById('back-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 600) {
+        backTop.style.opacity = '1';
+        backTop.style.pointerEvents = 'auto';
+      } else {
+        backTop.style.opacity = '0';
+        backTop.style.pointerEvents = 'none';
+      }
+    });
+
+    // ===== MOBILE MENU =====
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.toggle('open');
+    });
+    function closeMobile() {
+      document.getElementById('mobile-menu').classList.remove('open');
+    }
+
+    // ===== FAQ ACCORDION =====
+    function toggleFaq(el) {
+      const item = el.parentElement;
+      const wasOpen = item.classList.contains('open');
+      // close all
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    }
+
+    // ===== 3D TILT ON CARDS =====
+    document.querySelectorAll('.tilt-card').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = (y - centerY) / 15;
+        const rotateY = (centerX - x) / 15;
+        card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)';
+      });
+    });
+
+    // ===== MAGNETIC BUTTONS =====
+    document.querySelectorAll('.btn-mag').forEach(btn => {
+      btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'translate(0, 0)';
+      });
+      // Ripple effect
+      btn.addEventListener('click', function(e) {
+        const rect = this.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple');
+        ripple.style.left = (e.clientX - rect.left) + 'px';
+        ripple.style.top = (e.clientY - rect.top) + 'px';
+        ripple.style.width = ripple.style.height = Math.max(rect.width, rect.height) + 'px';
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    });
+
+    // ===== PARALLAX ON SCROLL =====
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      document.querySelectorAll('.parallax-layer').forEach(layer => {
+        const speed = parseFloat(layer.dataset.speed) || 0.5;
+        layer.style.transform = `translateY(${scrollY * speed}px)`;
+      });
+    });
+
+    // ===== SMOOTH ANCHOR SCROLLING =====
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
